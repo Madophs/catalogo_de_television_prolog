@@ -1,0 +1,7 @@
+.sub-tabla{
+    width: 100px;
+    min-width: 100px;
+}
+.bordes{
+    border: solid 3px gray;
+}
