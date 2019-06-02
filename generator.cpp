@@ -5,12 +5,14 @@ using namespace std;
 struct TvShow{
 	string name;
 	string channel;
+	string description;
 	int day;
 	int startHour;
 	int length;
-	TvShow(string name, string channel, int day, int startHour, int length){
+	TvShow(string name, string channel,string description, int day, int startHour, int length){
 		this->name = name;
 		this->channel = channel;
+		this->description = description;
 		this->day = day;
 		this->startHour = startHour;
 		this->length = length;
@@ -18,7 +20,7 @@ struct TvShow{
 };
 
 ostream & operator << (ostream &out, TvShow show){
-	out<<"programa('"<<show.name<<"','"<<show.channel<<"',"<<show.day<<","<<show.startHour<<","<<show.length<<").";
+	out<<"programa('"<<show.name<<"','"<<show.channel<<"',"<<show.day<<","<<show.startHour<<","<<show.length<<",'"<<show.description<<"').";
 	return out;
 }
 
@@ -31,14 +33,14 @@ string trimString(string str){
 void printRules(){
 	cout<<"% Reglas\n\n";
 	cout<<"getCanales(X,Y) :- forall(canal(X,Y),imprimeCanal(X)).\n";
-	cout<<"getProgramacion(Nombre,Canal,Dia,Hora,Duracion) :- forall(programa(Nombre,Canal,Dia,Hora,Duracion), imprimeInfo(Nombre,Canal,Dia,Hora,Duracion)).\n";
-	cout<<"imprimeInfo(A,B,C,D,E) :-separa(A),imprimeCanal2(B),separa(C),separa(D),separa(E),nl.\n";
+	cout<<"getProgramacion(Nombre,Canal,Dia,Hora,Duracion,Descripcion) :- forall(programa(Nombre,Canal,Dia,Hora,Duracion,Descripcion), imprimeInfo(Nombre,Canal,Dia,Hora,Duracion,Descripcion)).\n";
+	cout<<"imprimeInfo(A,B,C,D,E,F) :-separa(A),imprimeCanal2(B),separa(C),separa(D),separa(E),separa(F),nl.\n";
 	cout<<"separa(X) :- write('|'), write(X).\n";
 	cout<<"imprimeCanal(X) :- canal(X,Y),write(X),write('|'),write(Y),nl.\n";
 	cout<<"imprimeCanal2(X) :- canal(X,Y),write('|'),write(X),write('|'),write(Y).\n\n";
 }
 
-void  generateCalendar(string channelName, unordered_set<string> tvShows){
+void  generateCalendar(string channelName, unordered_map<string,string> tvShows){
 	vector<vector<TvShow>> calendar;
 	cout<<"% Programación de "<<channelName<<"\n\n";
 	for(int i = 0; i<7; i++){
@@ -49,16 +51,17 @@ void  generateCalendar(string channelName, unordered_set<string> tvShows){
 			int tvShowIndex = (int)(rand() % (int)tvShows.size());
 			auto iter = tvShows.begin();
 			advance(iter,tvShowIndex);
-			string tvShowName = *iter;
+			string tvShowName = iter->first;
+			string tvShowDescription = iter->second;
 			if(hoursRemaining <= 3){
 				int tvShowLength = hoursRemaining;
-				TvShow tvShow(tvShowName, channelName, i, currentHour, tvShowLength);
+				TvShow tvShow(tvShowName, channelName, tvShowDescription, i, currentHour, tvShowLength);
 				calendar.back().emplace_back(tvShow);
 				currentHour += tvShowLength;
 				hoursRemaining -= tvShowLength;
 			}else{
 				int tvShowLength = (int)(rand() % 3)+1;
-				TvShow tvShow(tvShowName, channelName, i, currentHour, tvShowLength);
+				TvShow tvShow(tvShowName, channelName, tvShowDescription, i, currentHour, tvShowLength);
 				calendar.back().emplace_back(tvShow);
 				currentHour += tvShowLength;
 				hoursRemaining -= tvShowLength;
@@ -81,11 +84,10 @@ int main(){
 	cout.tie(NULL);
 	srand(time(0));
 	vector<pair<int,string>> channelsVector;
-	unordered_set<string> tvShowSet;
-	
+	unordered_map<string,string> tvShowMap;
 	int numChannels,channelNumber;
 	unordered_set<int> uniqueChannelNumbers;
-	string tvShowName, channelName;
+	string tvShowName, channelName, tvShowDescription;
 	cin>>numChannels;
 	cin.ignore();
 	while(numChannels-- && getline(cin, channelName)){
@@ -95,9 +97,12 @@ int main(){
 		channelsVector.emplace_back(channelNumber,channelName);
 	}
 	while(getline(cin,tvShowName)){
-		tvShowName = trimString(tvShowName);
 		if(tvShowName.empty()) continue;
-		tvShowSet.insert(tvShowName);
+		getline(cin,tvShowDescription);
+		tvShowName = trimString(tvShowName);
+		tvShowDescription = trimString(tvShowDescription);
+		if(tvShowName.empty() || tvShowDescription.empty()) continue;
+		tvShowMap[tvShowName] = tvShowDescription;
 	}
 	sort(channelsVector.begin(), channelsVector.end());
 	for(auto channel : channelsVector){
@@ -106,7 +111,7 @@ int main(){
 	cout<<"\n";
 	printRules();
 	for(int i = 0; i<channelsVector.size(); i++){
-		generateCalendar(channelsVector[i].second, tvShowSet);
+		generateCalendar(channelsVector[i].second, tvShowMap);
 	}
 	return 0;
 }
